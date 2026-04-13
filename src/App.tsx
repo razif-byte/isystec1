@@ -21,7 +21,12 @@ import {
   MapPin,
   Facebook,
   Instagram,
-  ArrowRight
+  ArrowRight,
+  Heart,
+  User,
+  LogOut,
+  Package,
+  ChevronRight
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -39,22 +44,40 @@ import {
   DialogDescription,
   DialogFooter
 } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 import { PRODUCTS, BUSINESS_INFO } from './constants';
 import { Product, CartItem, Category } from './types';
 
 export default function App() {
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [wishlist, setWishlist] = useState<string[]>([]);
   const [activeCategory, setActiveCategory] = useState<Category | 'All'>('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
 
   const filteredProducts = useMemo(() => {
     return PRODUCTS.filter(p => {
       const matchesCategory = activeCategory === 'All' || p.category === activeCategory;
-      const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                           p.description.toLowerCase().includes(searchQuery.toLowerCase());
+      const q = searchQuery.toLowerCase();
+      const matchesSearch = p.name.toLowerCase().includes(q) || 
+                           p.description.toLowerCase().includes(q) ||
+                           p.category.toLowerCase().includes(q);
       return matchesCategory && matchesSearch;
     });
   }, [activeCategory, searchQuery]);
@@ -84,6 +107,14 @@ export default function App() {
     }));
   };
 
+  const toggleWishlist = (productId: string) => {
+    setWishlist(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId) 
+        : [...prev, productId]
+    );
+  };
+
   const cartTotal = cart.reduce((sum, item) => sum + (item.sellingPrice * item.quantity), 0);
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -92,7 +123,10 @@ export default function App() {
     setIsCheckoutOpen(true);
   };
 
+  const wishlistProducts = PRODUCTS.filter(p => wishlist.includes(p.id));
+
   return (
+    <TooltipProvider>
     <div className="min-h-screen bg-background text-foreground selection:bg-primary/30">
       {/* Checkout Dialog */}
       <Dialog open={isCheckoutOpen} onOpenChange={setIsCheckoutOpen}>
@@ -136,6 +170,50 @@ export default function App() {
         </DialogContent>
       </Dialog>
 
+      {/* Wishlist Sheet */}
+      <Sheet open={isWishlistOpen} onOpenChange={setIsWishlistOpen}>
+        <SheetContent className="w-full sm:max-w-md flex flex-col">
+          <SheetHeader>
+            <SheetTitle className="flex items-center gap-2">
+              <Heart className="w-5 h-5 text-destructive fill-destructive" />
+              Your Wishlist
+            </SheetTitle>
+          </SheetHeader>
+          <Separator className="my-4" />
+          <ScrollArea className="flex-1 -mx-6 px-6">
+            {wishlistProducts.length === 0 ? (
+              <div className="h-full flex flex-col items-center justify-center text-center py-20">
+                <Heart className="w-12 h-12 text-muted-foreground mb-4 opacity-20" />
+                <p className="text-muted-foreground">Your wishlist is empty</p>
+                <Button variant="link" onClick={() => setIsWishlistOpen(false)}>Browse products</Button>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {wishlistProducts.map((item) => (
+                  <div key={item.id} className="flex gap-4 group">
+                    <div className="w-20 h-20 rounded-lg overflow-hidden bg-secondary">
+                      <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-medium text-sm">{item.name}</h4>
+                      <p className="text-xs text-muted-foreground mb-2">RM {item.sellingPrice.toLocaleString()}</p>
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => addToCart(item)}>
+                          Add to Cart
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => toggleWishlist(item.id)}>
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </ScrollArea>
+        </SheetContent>
+      </Sheet>
+
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md">
         <div className="container mx-auto px-4 h-20 flex items-center justify-between">
@@ -143,108 +221,149 @@ export default function App() {
             <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center text-primary-foreground font-bold text-xl">
               IS
             </div>
-            <div>
+            <div className="hidden sm:block">
               <h1 className="font-bold text-lg leading-tight">{BUSINESS_INFO.name}</h1>
               <p className="text-[10px] text-muted-foreground uppercase tracking-widest">{BUSINESS_INFO.regNo}</p>
             </div>
           </div>
 
-          <nav className="hidden md:flex items-center gap-8">
+          <nav className="hidden lg:flex items-center gap-8">
             <button onClick={() => setActiveCategory('All')} className={`text-sm font-medium transition-colors ${activeCategory === 'All' ? 'text-primary' : 'hover:text-primary'}`}>All Products</button>
             <button onClick={() => setActiveCategory('Security')} className={`text-sm font-medium transition-colors ${activeCategory === 'Security' ? 'text-primary' : 'hover:text-primary'}`}>Security</button>
             <button onClick={() => setActiveCategory('Solar')} className={`text-sm font-medium transition-colors ${activeCategory === 'Solar' ? 'text-primary' : 'hover:text-primary'}`}>Solar</button>
             <button onClick={() => setActiveCategory('Accessories')} className={`text-sm font-medium transition-colors ${activeCategory === 'Accessories' ? 'text-primary' : 'hover:text-primary'}`}>Accessories</button>
           </nav>
 
-          <div className="flex items-center gap-4">
-            <div className="relative hidden sm:block">
+          <div className="flex items-center gap-2 sm:gap-4">
+            <div className="relative hidden md:block">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input 
                 placeholder="Search products..." 
-                className="pl-10 w-64 bg-secondary/50 border-none focus-visible:ring-1"
+                className="pl-10 w-48 lg:w-64 bg-secondary/50 border-none focus-visible:ring-1"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
 
-            <Sheet open={isCartOpen} onOpenChange={setIsCartOpen}>
-              <SheetTrigger asChild>
-                <Button variant="outline" size="icon" className="relative">
-                  <ShoppingCart className="w-5 h-5" />
-                  {cartCount > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
-                      {cartCount}
-                    </span>
-                  )}
-                </Button>
-              </SheetTrigger>
-              <SheetContent className="w-full sm:max-w-md flex flex-col">
-                <SheetHeader>
-                  <SheetTitle className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="icon" className="relative" onClick={() => setIsWishlistOpen(true)}>
+                    <Heart className={`w-5 h-5 ${wishlist.length > 0 ? 'text-destructive fill-destructive' : ''}`} />
+                    {wishlist.length > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-destructive text-white text-[8px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                        {wishlist.length}
+                      </span>
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Wishlist</TooltipContent>
+              </Tooltip>
+
+              <Sheet open={isCartOpen} onOpenChange={setIsCartOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="outline" size="icon" className="relative">
                     <ShoppingCart className="w-5 h-5" />
-                    Your Cart
-                  </SheetTitle>
-                </SheetHeader>
-                <Separator className="my-4" />
-                
-                <ScrollArea className="flex-1 -mx-6 px-6">
-                  {cart.length === 0 ? (
-                    <div className="h-full flex flex-col items-center justify-center text-center py-20">
-                      <ShoppingCart className="w-12 h-12 text-muted-foreground mb-4 opacity-20" />
-                      <p className="text-muted-foreground">Your cart is empty</p>
-                      <Button variant="link" onClick={() => setIsCartOpen(false)}>Start shopping</Button>
-                    </div>
-                  ) : (
-                    <div className="space-y-6">
-                      {cart.map((item) => (
-                        <div key={item.id} className="flex gap-4">
-                          <div className="w-20 h-20 rounded-lg overflow-hidden bg-secondary">
-                            <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
-                          </div>
-                          <div className="flex-1">
-                            <h4 className="font-medium text-sm">{item.name}</h4>
-                            <p className="text-xs text-muted-foreground mb-2">RM {item.sellingPrice.toLocaleString()}</p>
-                            <div className="flex items-center gap-3">
-                              <div className="flex items-center border rounded-md">
-                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => updateQuantity(item.id, -1)}>
-                                  <Minus className="w-3 h-3" />
-                                </Button>
-                                <span className="text-xs w-6 text-center">{item.quantity}</span>
-                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => updateQuantity(item.id, 1)}>
-                                  <Plus className="w-3 h-3" />
+                    {cartCount > 0 && (
+                      <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
+                        {cartCount}
+                      </span>
+                    )}
+                  </Button>
+                </SheetTrigger>
+                <SheetContent className="w-full sm:max-w-md flex flex-col">
+                  <SheetHeader>
+                    <SheetTitle className="flex items-center gap-2">
+                      <ShoppingCart className="w-5 h-5" />
+                      Your Cart
+                    </SheetTitle>
+                  </SheetHeader>
+                  <Separator className="my-4" />
+                  
+                  <ScrollArea className="flex-1 -mx-6 px-6">
+                    {cart.length === 0 ? (
+                      <div className="h-full flex flex-col items-center justify-center text-center py-20">
+                        <ShoppingCart className="w-12 h-12 text-muted-foreground mb-4 opacity-20" />
+                        <p className="text-muted-foreground">Your cart is empty</p>
+                        <Button variant="link" onClick={() => setIsCartOpen(false)}>Start shopping</Button>
+                      </div>
+                    ) : (
+                      <div className="space-y-6">
+                        {cart.map((item) => (
+                          <div key={item.id} className="flex gap-4">
+                            <div className="w-20 h-20 rounded-lg overflow-hidden bg-secondary">
+                              <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                            </div>
+                            <div className="flex-1">
+                              <h4 className="font-medium text-sm">{item.name}</h4>
+                              <p className="text-xs text-muted-foreground mb-2">RM {item.sellingPrice.toLocaleString()}</p>
+                              <div className="flex items-center gap-3">
+                                <div className="flex items-center border rounded-md">
+                                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => updateQuantity(item.id, -1)}>
+                                    <Minus className="w-3 h-3" />
+                                  </Button>
+                                  <span className="text-xs w-6 text-center">{item.quantity}</span>
+                                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => updateQuantity(item.id, 1)}>
+                                    <Plus className="w-3 h-3" />
+                                  </Button>
+                                </div>
+                                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => removeFromCart(item.id)}>
+                                  <Trash2 className="w-3 h-3" />
                                 </Button>
                               </div>
-                              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => removeFromCart(item.id)}>
-                                <Trash2 className="w-3 h-3" />
-                              </Button>
+                            </div>
+                            <div className="text-right">
+                              <p className="font-bold text-sm">RM {(item.sellingPrice * item.quantity).toLocaleString()}</p>
                             </div>
                           </div>
-                          <div className="text-right">
-                            <p className="font-bold text-sm">RM {(item.sellingPrice * item.quantity).toLocaleString()}</p>
-                          </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
+                    )}
+                  </ScrollArea>
+
+                  {cart.length > 0 && (
+                    <div className="pt-6 space-y-4">
+                      <Separator />
+                      <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">Total</span>
+                        <span className="text-xl font-bold text-primary">RM {cartTotal.toLocaleString()}</span>
+                      </div>
+                      <Button className="w-full h-12 text-lg font-bold" onClick={handleCheckout}>
+                        Checkout
+                      </Button>
+                      <p className="text-[10px] text-center text-muted-foreground">
+                        Sila hantar bukti pembayaran ke WhatsApp kami selepas checkout.
+                      </p>
                     </div>
                   )}
-                </ScrollArea>
+                </SheetContent>
+              </Sheet>
 
-                {cart.length > 0 && (
-                  <div className="pt-6 space-y-4">
-                    <Separator />
-                    <div className="flex justify-between items-center">
-                      <span className="text-muted-foreground">Total</span>
-                      <span className="text-xl font-bold text-primary">RM {cartTotal.toLocaleString()}</span>
-                    </div>
-                    <Button className="w-full h-12 text-lg font-bold" onClick={handleCheckout}>
-                      Checkout
-                    </Button>
-                    <p className="text-[10px] text-center text-muted-foreground">
-                      Sila hantar bukti pembayaran ke WhatsApp kami selepas checkout.
-                    </p>
-                  </div>
-                )}
-              </SheetContent>
-            </Sheet>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="rounded-full">
+                    <User className="w-5 h-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setIsWishlistOpen(true)}>
+                    <Heart className="mr-2 h-4 w-4" />
+                    <span>Wishlist ({wishlist.length})</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Package className="mr-2 h-4 w-4" />
+                    <span>My Orders</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem className="text-destructive">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Log out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </div>
       </header>
@@ -279,6 +398,19 @@ export default function App() {
         </div>
       </section>
 
+      {/* Search Bar Mobile */}
+      <div className="md:hidden container mx-auto px-4 pb-6">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input 
+            placeholder="Search products..." 
+            className="pl-10 w-full bg-secondary/50 border-none focus-visible:ring-1"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+      </div>
+
       {/* Categories Grid */}
       <section className="py-12 bg-secondary/30">
         <div className="container mx-auto px-4">
@@ -311,8 +443,12 @@ export default function App() {
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
             <div>
-              <h2 className="text-3xl font-bold mb-2">Our Products</h2>
-              <p className="text-muted-foreground">Browse our selection of high-quality equipment.</p>
+              <h2 className="text-3xl font-bold mb-2">
+                {searchQuery ? `Search Results for "${searchQuery}"` : 'Our Products'}
+              </h2>
+              <p className="text-muted-foreground">
+                {filteredProducts.length} products found in {activeCategory === 'All' ? 'all categories' : activeCategory}.
+              </p>
             </div>
             <div className="flex flex-wrap gap-2">
               {['All', 'Security', 'Solar', 'Accessories'].map((cat) => (
@@ -340,7 +476,18 @@ export default function App() {
                   exit={{ opacity: 0, scale: 0.9 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <Card className="group overflow-hidden border-none bg-secondary/20 hover:bg-secondary/40 transition-colors h-full flex flex-col">
+                  <Card className="group overflow-hidden border-none bg-secondary/20 hover:bg-secondary/40 transition-colors h-full flex flex-col relative">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="absolute top-4 right-4 z-10 bg-background/50 backdrop-blur-sm rounded-full hover:bg-background/80"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleWishlist(product.id);
+                      }}
+                    >
+                      <Heart className={`w-5 h-5 ${wishlist.includes(product.id) ? 'text-destructive fill-destructive' : ''}`} />
+                    </Button>
                     <div className="aspect-[4/3] overflow-hidden relative">
                       <img 
                         src={product.image} 
@@ -459,5 +606,6 @@ export default function App() {
         </div>
       </footer>
     </div>
+    </TooltipProvider>
   );
 }

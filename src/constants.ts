@@ -14,7 +14,7 @@ export const PRODUCTS: Product[] = [
     costPrice: 250,
     sellingPrice: calculateSellingPrice(250),
     category: 'Security',
-    image: 'https://picsum.photos/seed/cctv/600/400',
+    image: 'https://images.unsplash.com/photo-1557597774-9d273605dfa9?q=80&w=1000',
   },
   {
     id: 'sec-2',
@@ -23,7 +23,7 @@ export const PRODUCTS: Product[] = [
     costPrice: 450,
     sellingPrice: calculateSellingPrice(450),
     category: 'Security',
-    image: 'https://picsum.photos/seed/doorlock/600/400',
+    image: 'https://images.unsplash.com/photo-1558002038-1055907df827?q=80&w=1000',
   },
   {
     id: 'sec-3',
@@ -32,7 +32,7 @@ export const PRODUCTS: Product[] = [
     costPrice: 320,
     sellingPrice: calculateSellingPrice(320),
     category: 'Security',
-    image: 'https://picsum.photos/seed/alarm/600/400',
+    image: 'https://images.unsplash.com/photo-1585314062340-f1a5a7c9328d?q=80&w=1000',
   },
 
   // Solar
@@ -43,7 +43,7 @@ export const PRODUCTS: Product[] = [
     costPrice: 600,
     sellingPrice: calculateSellingPrice(600),
     category: 'Solar',
-    image: 'https://picsum.photos/seed/solarpanel/600/400',
+    image: 'https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?q=80&w=1000',
   },
   {
     id: 'sol-2',
@@ -52,7 +52,7 @@ export const PRODUCTS: Product[] = [
     costPrice: 2800,
     sellingPrice: calculateSellingPrice(2800),
     category: 'Solar',
-    image: 'https://picsum.photos/seed/inverter/600/400',
+    image: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=1000',
   },
   {
     id: 'sol-3',
@@ -61,7 +61,7 @@ export const PRODUCTS: Product[] = [
     costPrice: 1500,
     sellingPrice: calculateSellingPrice(1500),
     category: 'Solar',
-    image: 'https://picsum.photos/seed/battery/600/400',
+    image: 'https://images.unsplash.com/photo-1611338003530-99980177b3c4?q=80&w=1000',
   },
 
   // Accessories
@@ -72,7 +72,7 @@ export const PRODUCTS: Product[] = [
     costPrice: 180,
     sellingPrice: calculateSellingPrice(180),
     category: 'Accessories',
-    image: 'https://picsum.photos/seed/cable/600/400',
+    image: 'https://images.unsplash.com/photo-1620288627223-53302f4e8c74?q=80&w=1000',
   },
   {
     id: 'acc-2',
@@ -81,7 +81,7 @@ export const PRODUCTS: Product[] = [
     costPrice: 45,
     sellingPrice: calculateSellingPrice(45),
     category: 'Accessories',
-    image: 'https://picsum.photos/seed/connector/600/400',
+    image: 'https://images.unsplash.com/photo-1591405351990-4726e331f141?q=80&w=1000',
   },
   {
     id: 'acc-3',
@@ -90,7 +90,7 @@ export const PRODUCTS: Product[] = [
     costPrice: 120,
     sellingPrice: calculateSellingPrice(120),
     category: 'Accessories',
-    image: 'https://picsum.photos/seed/rail/600/400',
+    image: 'https://images.unsplash.com/photo-1542336391-ae2936d8efe4?q=80&w=1000',
   },
 ];
 
