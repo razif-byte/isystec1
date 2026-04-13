@@ -8,8 +8,11 @@ export interface Product {
   sellingPrice: number;
   category: Category;
   image: string;
-  rating?: number;
-  reviewCount?: number;
+  gallery: string[];
+  sku: string;
+  stockLabel: string;
+  badge?: string;
+  shopifyVariantId?: string;
 }
 
 export interface Review {
@@ -24,3 +27,5 @@ export interface Review {
 export interface CartItem extends Product {
   quantity: number;
 }
+
+export type PaymentMethod = 'shopify' | 'fpx' | 'duitnow' | 'whatsapp';
