@@ -1,4 +1,4 @@
-import { Product } from './types';
+import { Product, Review } from './types';
 
 const calculateSellingPrice = (cost: number) => {
   // 30% margin: Selling = Cost / (1 - 0.3)
@@ -92,6 +92,33 @@ export const PRODUCTS: Product[] = [
     category: 'Accessories',
     image: 'https://images.unsplash.com/photo-1542336391-ae2936d8efe4?q=80&w=1000',
   },
+];
+
+export const INITIAL_REVIEWS: Review[] = [
+  {
+    id: 'rev-1',
+    productId: 'sec-1',
+    userName: 'Ahmad Razif',
+    rating: 5,
+    comment: 'Very clear image even at night. Highly recommended!',
+    date: '2024-03-15',
+  },
+  {
+    id: 'rev-2',
+    productId: 'sec-1',
+    userName: 'Siti Aminah',
+    rating: 4,
+    comment: 'Good quality, but installation took some time.',
+    date: '2024-03-20',
+  },
+  {
+    id: 'rev-3',
+    productId: 'sol-1',
+    userName: 'John Doe',
+    rating: 5,
+    comment: 'Excellent efficiency. My electricity bill dropped significantly.',
+    date: '2024-04-01',
+  }
 ];
 
 export const BUSINESS_INFO = {

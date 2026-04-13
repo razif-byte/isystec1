@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, FormEvent } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   ShoppingCart, 
@@ -19,20 +19,25 @@ import {
   CreditCard,
   Phone,
   MapPin,
-  Facebook,
-  Instagram,
+  Globe,
+  Mail,
   ArrowRight,
   Heart,
   User,
   LogOut,
   Package,
-  ChevronRight
+  ChevronRight,
+  Star,
+  StarHalf,
+  MessageSquare
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
@@ -51,6 +56,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu";
 import {
   Tooltip,
@@ -59,17 +65,27 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-import { PRODUCTS, BUSINESS_INFO } from './constants';
-import { Product, CartItem, Category } from './types';
+import { PRODUCTS, BUSINESS_INFO, INITIAL_REVIEWS } from './constants';
+import { Product, CartItem, Category, Review } from './types';
 
 export default function App() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [wishlist, setWishlist] = useState<string[]>([]);
+  const [reviews, setReviews] = useState<Review[]>(INITIAL_REVIEWS);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [newReview, setNewReview] = useState({ rating: 5, comment: '' });
   const [activeCategory, setActiveCategory] = useState<Category | 'All'>('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+
+  const getProductRating = (productId: string) => {
+    const productReviews = reviews.filter(r => r.productId === productId);
+    if (productReviews.length === 0) return { avg: 0, count: 0 };
+    const sum = productReviews.reduce((acc, r) => acc + r.rating, 0);
+    return { avg: sum / productReviews.length, count: productReviews.length };
+  };
 
   const filteredProducts = useMemo(() => {
     return PRODUCTS.filter(p => {
@@ -125,9 +141,155 @@ export default function App() {
 
   const wishlistProducts = PRODUCTS.filter(p => wishlist.includes(p.id));
 
+  const handleAddReview = (e: FormEvent) => {
+    e.preventDefault();
+    if (!selectedProduct) return;
+    
+    const review: Review = {
+      id: `rev-${Date.now()}`,
+      productId: selectedProduct.id,
+      userName: 'Guest User',
+      rating: newReview.rating,
+      comment: newReview.comment,
+      date: new Date().toISOString().split('T')[0],
+    };
+
+    setReviews(prev => [review, ...prev]);
+    setNewReview({ rating: 5, comment: '' });
+  };
+
+  const StarRating = ({ rating, size = 16 }: { rating: number, size?: number }) => {
+    return (
+      <div className="flex gap-0.5">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <Star 
+            key={star} 
+            size={size} 
+            className={`${star <= rating ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground opacity-30'}`} 
+          />
+        ))}
+      </div>
+    );
+  };
+
   return (
     <TooltipProvider>
     <div className="min-h-screen bg-background text-foreground selection:bg-primary/30">
+      {/* Product Detail Dialog */}
+      <Dialog open={!!selectedProduct} onOpenChange={(open) => !open && setSelectedProduct(null)}>
+        <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-hidden flex flex-col p-0">
+          {selectedProduct && (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 h-full overflow-hidden">
+                <div className="relative aspect-square md:aspect-auto bg-secondary/20">
+                  <img 
+                    src={selectedProduct.image} 
+                    alt={selectedProduct.name} 
+                    className="w-full h-full object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                  <Badge className="absolute top-4 left-4 bg-background/80 backdrop-blur-sm text-foreground border-none">
+                    {selectedProduct.category}
+                  </Badge>
+                </div>
+                <div className="flex flex-col h-full overflow-hidden">
+                  <ScrollArea className="flex-1 p-6">
+                    <div className="space-y-6">
+                      <div>
+                        <h2 className="text-2xl font-bold mb-2">{selectedProduct.name}</h2>
+                        <div className="flex items-center gap-3">
+                          <StarRating rating={getProductRating(selectedProduct.id).avg} />
+                          <span className="text-sm text-muted-foreground">
+                            ({getProductRating(selectedProduct.id).count} reviews)
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-1">
+                        <p className="text-sm text-muted-foreground line-through opacity-50">RM {selectedProduct.costPrice.toLocaleString()}</p>
+                        <p className="text-3xl font-bold text-primary">RM {selectedProduct.sellingPrice.toLocaleString()}</p>
+                      </div>
+
+                      <p className="text-muted-foreground leading-relaxed">
+                        {selectedProduct.description}
+                      </p>
+
+                      <Separator />
+
+                      <div className="space-y-4">
+                        <h3 className="font-bold flex items-center gap-2">
+                          <MessageSquare className="w-4 h-4" />
+                          Customer Reviews
+                        </h3>
+                        
+                        <div className="space-y-6">
+                          {reviews.filter(r => r.productId === selectedProduct.id).length === 0 ? (
+                            <p className="text-sm text-muted-foreground italic">No reviews yet. Be the first to review!</p>
+                          ) : (
+                            reviews.filter(r => r.productId === selectedProduct.id).map(review => (
+                              <div key={review.id} className="space-y-2">
+                                <div className="flex justify-between items-center">
+                                  <span className="font-bold text-sm">{review.userName}</span>
+                                  <span className="text-xs text-muted-foreground">{review.date}</span>
+                                </div>
+                                <StarRating rating={review.rating} size={12} />
+                                <p className="text-sm text-muted-foreground">{review.comment}</p>
+                              </div>
+                            ))
+                          )}
+                        </div>
+
+                        <Separator />
+
+                        <form onSubmit={handleAddReview} className="space-y-4 pt-2">
+                          <h4 className="text-sm font-bold">Write a Review</h4>
+                          <div className="space-y-2">
+                            <Label className="text-xs">Rating</Label>
+                            <div className="flex gap-2">
+                              {[1, 2, 3, 4, 5].map((star) => (
+                                <button
+                                  key={star}
+                                  type="button"
+                                  onClick={() => setNewReview(prev => ({ ...prev, rating: star }))}
+                                  className="transition-transform hover:scale-110"
+                                >
+                                  <Star 
+                                    size={20} 
+                                    className={`${star <= newReview.rating ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground opacity-30'}`} 
+                                  />
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-xs">Comment</Label>
+                            <Textarea 
+                              placeholder="Share your experience..." 
+                              value={newReview.comment}
+                              onChange={(e) => setNewReview(prev => ({ ...prev, comment: e.target.value }))}
+                              className="min-h-[80px] text-sm"
+                              required
+                            />
+                          </div>
+                          <Button type="submit" size="sm" className="w-full">Submit Review</Button>
+                        </form>
+                      </div>
+                    </div>
+                  </ScrollArea>
+                  <div className="p-6 border-t bg-background">
+                    <Button className="w-full h-12 font-bold text-lg rounded-xl" onClick={() => {
+                      addToCart(selectedProduct);
+                      setSelectedProduct(null);
+                    }}>
+                      Add to Cart
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
       {/* Checkout Dialog */}
       <Dialog open={isCheckoutOpen} onOpenChange={setIsCheckoutOpen}>
         <DialogContent className="sm:max-w-md">
@@ -476,7 +638,10 @@ export default function App() {
                   exit={{ opacity: 0, scale: 0.9 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <Card className="group overflow-hidden border-none bg-secondary/20 hover:bg-secondary/40 transition-colors h-full flex flex-col relative">
+                  <Card 
+                    className="group overflow-hidden border-none bg-secondary/20 hover:bg-secondary/40 transition-colors h-full flex flex-col relative cursor-pointer"
+                    onClick={() => setSelectedProduct(product)}
+                  >
                     <Button 
                       variant="ghost" 
                       size="icon" 
@@ -500,7 +665,13 @@ export default function App() {
                       </Badge>
                     </div>
                     <CardHeader className="p-6 pb-2">
-                      <CardTitle className="text-lg font-bold line-clamp-1">{product.name}</CardTitle>
+                      <div className="flex flex-col gap-2">
+                        <div className="flex items-center gap-2">
+                          <StarRating rating={getProductRating(product.id).avg} size={12} />
+                          <span className="text-[10px] text-muted-foreground">({getProductRating(product.id).count})</span>
+                        </div>
+                        <CardTitle className="text-lg font-bold line-clamp-1">{product.name}</CardTitle>
+                      </div>
                     </CardHeader>
                     <CardContent className="p-6 pt-0 flex-1">
                       <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
@@ -512,7 +683,10 @@ export default function App() {
                       </div>
                     </CardContent>
                     <CardFooter className="p-6 pt-0">
-                      <Button className="w-full rounded-xl font-bold" onClick={() => addToCart(product)}>
+                      <Button className="w-full rounded-xl font-bold" onClick={(e) => {
+                        e.stopPropagation();
+                        addToCart(product);
+                      }}>
                         Add to Cart
                       </Button>
                     </CardFooter>
@@ -563,8 +737,8 @@ export default function App() {
                 Your trusted partner for security and solar energy solutions in Malaysia.
               </p>
               <div className="flex gap-4">
-                <Button variant="ghost" size="icon" className="rounded-full bg-secondary/50"><Facebook className="w-4 h-4" /></Button>
-                <Button variant="ghost" size="icon" className="rounded-full bg-secondary/50"><Instagram className="w-4 h-4" /></Button>
+                <Button variant="ghost" size="icon" className="rounded-full bg-secondary/50"><Globe className="w-4 h-4" /></Button>
+                <Button variant="ghost" size="icon" className="rounded-full bg-secondary/50"><Mail className="w-4 h-4" /></Button>
               </div>
             </div>
 
