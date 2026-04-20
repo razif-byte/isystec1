@@ -257,38 +257,38 @@ export const BUSINESS_INFO = {
   email: 'izwansystec@gmail.com',
   phone: '+60 11-XXXX XXXX',
   location: 'Malaysia',
-  whatsappNumber: '',
+  whatsappNumber: import.meta.env.VITE_WHATSAPP_NUMBER || '60174511455',  // +6017-4511455
   whatsappLinkFallback: 'https://wa.me/',
   shopifyStoreUrl: import.meta.env.VITE_SHOPIFY_STORE_URL || '',
   shopifyStorefrontAccessToken: import.meta.env.VITE_SHOPIFY_STOREFRONT_ACCESS_TOKEN || '',
   shopifyStorefrontApiVersion: import.meta.env.VITE_SHOPIFY_STOREFRONT_API_VERSION || '2026-01',
   shopifyCartPath: '/cart/',
-  duitNowQrUrl: '',
+  duitNowQrUrl: import.meta.env.VITE_DUITNOW_QR_URL || '',  // Optional: URL imej QR DuitNow merchant dari bank
 };
 
 export const PAYMENT_OPTIONS = [
   {
     id: 'shopify',
     title: 'Shopify Checkout',
-    description: 'Buka checkout Shopify sebenar melalui Storefront API bila token dan variant ID sudah diisi.',
+    description: 'Buka checkout Shopify sebenar melalui Storefront API. Perlu VITE_SHOPIFY_STORE_URL dan variant ID produk.',
     status: 'Perlu setup',
   },
   {
     id: 'fpx',
     title: 'FPX / Debit / Credit Card',
-    description: 'Jika FPX diaktifkan pada Shopify checkout atau gateway pihak ketiga, pelanggan akan bayar terus di checkout yang sama.',
+    description: 'Tersedia melalui Shopify bila gateway FPX diaktifkan. Buat masa ini guna DuitNow sebagai alternatif.',
     status: 'Perlu setup',
   },
   {
     id: 'duitnow',
-    title: 'DuitNow QR / Bank Transfer',
-    description: 'Sesuai untuk order manual sekarang sambil menunggu gateway live.',
+    title: 'DuitNow / Bank Transfer',
+    description: 'Transfer terus ke CIMB 8604630283. Hantar bukti bayaran ke WhatsApp admin selepas bayar.',
     status: 'Sedia',
   },
   {
     id: 'whatsapp',
-    title: 'WhatsApp Confirmation',
-    description: 'Pesanan pelanggan dijana terus dengan nama, alamat dan item troli.',
+    title: 'Order via WhatsApp',
+    description: 'Pesanan lengkap dengan item, jumlah dan alamat dihantar terus ke WhatsApp admin untuk closing manual.',
     status: 'Sedia',
   },
 ] as const;
